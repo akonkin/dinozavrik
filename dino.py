@@ -11,8 +11,6 @@ from keras.models import load_model
 import tensorflow as tf
 
 
-
-
 class Pac:
     def __init__(self, game_over, environ):
         self.alive = True
@@ -68,12 +66,8 @@ class Pac:
 
         with open('data_2.sav', 'w+') as d_file:
             for i in range(len(self.X)):
-                d_file.write(str(self.X[i]))
-                d_file.write(',')
-                d_file.write(str(self.y[i]))
-                d_file.write(',')
-                d_file.write(str(self.w[i]))
-                d_file.write('\n')
+                d_file.write('{},{},{}\n'.format(self.X[i], self.y[i], self.w[i]))
+
         self.mem = [[0]*64+[0]]
 
         print('X:', np.shape(self.X), 'Classes:', len(np.unique(self.y)))
