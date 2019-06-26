@@ -43,6 +43,7 @@ class Pac:
         self.jump_time = time.time()
 
     def think(self):
+        print('THINKING')
         mem_len = len(self.mem)
         for i in range(mem_len):
             if i < mem_len - 3:
@@ -108,7 +109,10 @@ class Pac:
                     with self.graph.as_default():
                         view = self.mem[-1][0][self.env_len:] + cur_env
                         p = self.model.predict(np.array([view]))[0][0]
-
+                        if p > 0.95:
+                            p = 1
+                        elif p < 0.05:
+                            p = 0
                         if self.first_game:
                             x = np.random.choice([0, 1], p=[0.5, 0.5])
                         else:
