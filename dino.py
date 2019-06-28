@@ -14,7 +14,6 @@ import tensorflow as tf
 class Pac:
     def __init__(self, game_over, environ, env_len=32):
         self.alive = True
-        self.speed = 0
         self.mem = [([0] * env_len * 2, 0)]
         self.X = []
         self.y = []
@@ -83,11 +82,8 @@ class Pac:
     def live_play(self, game_over, environ, restart):
 
         empty = [0] * self.env_len
-        g_start = time.time()
 
         while self.alive:
-
-            self.speed = int(time.time() - g_start)
 
             if game_over.is_set():
                 print ("GAME OVER")
@@ -97,7 +93,6 @@ class Pac:
                     print('+')
                     _ = environ.recv()
 
-                g_start = time.time()
                 print('RESTART')
                 game_over.clear()
                 restart.send('restart')
