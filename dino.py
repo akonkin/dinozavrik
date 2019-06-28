@@ -102,7 +102,7 @@ class Pac:
 
                 if cur_env != empty and (time.time() - self.jump_time) > 0.35:
                     with self.graph.as_default():
-                        view = self.mem[-1][0][self.env_len:] + cur_env
+                        view = last_env + cur_env
                         p = self.model.predict(np.array([view]))[0][0]
                         if p > 0.95:
                             p = 1
@@ -117,3 +117,4 @@ class Pac:
                             self.dino_jump()
 
                         self.mem.append((view, x))
+                last_env = cur_env[:]

@@ -12,7 +12,10 @@ from dino import Pac
 region = CG.CGRectMake(0, 0, 100, 100)
 image = CG.CGWindowListCreateImage(region, 1, 0, 0)
 
-# Процесс для героя
+
+# OS X screen capture
+
+
 def get_img(x,y,w,h):
     region = CG.CGRectMake(x, y, w, h)
     image = CG.CGWindowListCreateImage(region, 1, 0, 0)
@@ -26,6 +29,10 @@ def get_img(x,y,w,h):
     image = image.reshape((height, bytesperrow // 4, 4))
     im = image[:, :width, :]
     return im
+
+
+# Процесс для героя
+
 
 def pac_process(game_start, game_over, environ, restart):
     pacman = Pac(game_over, environ)
