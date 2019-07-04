@@ -3,6 +3,7 @@
 
 import pyautogui
 import multiprocessing
+from multiprocessing import Array
 import keyboard
 import time
 import numpy as np
@@ -34,8 +35,8 @@ def get_img(x,y,w,h):
 # Процесс для героя
 
 
-def pac_process(game_start, game_over, environ, restart):
-    pacman = Pac(game_over, environ)
+def pac_process(game_start, game_over, environ, restart, env_len):
+    pacman = Pac(game_over, environ, env_len)
     x = game_start.recv()
 
     print('GAME START')
@@ -46,11 +47,8 @@ def pac_process(game_start, game_over, environ, restart):
 # Процесс для окружения
 
 
-def env_process(game_start, game_over, environ_, restart):
-    black_color = (83, 83, 83, 255)
-    bg_color = (247, 247, 247, 255)
-    white_color = (255, 255, 255, 255)
-    im_ = get_img(0,0,700,1000)
+def env_process(game_start, game_over, environ_, restart, env_len):
+
     t_rex, t_rex_y, w, h = pyautogui.locateOnScreen("./images/t_rex_head.png")
     print(t_rex, t_rex_y, h)
     start_round = True
@@ -76,12 +74,12 @@ def env_process(game_start, game_over, environ_, restart):
                 keyboard.press_and_release('up, up')
                 print('RESTARTED')
             else:
-                environ = [0] * 32
+                environ = [0] * env_len
                 for i in range(0, 320):
                     c = im[h // 2 + 16, i, 0]
                     if c == 83:
-                        environ[i // 10] = 1
-                environ_.send(environ)
+                        environ[i // 5] = 1
+                environ_[:] = environ[:]
             if start_round:
                 game_start.send('ok')
                 start_round = False
@@ -92,15 +90,18 @@ if __name__ == '__main__':
     game_over = multiprocessing.Event()
     environ_parent, environ_child = multiprocessing.Pipe()
     restart_parent, restart_child = multiprocessing.Pipe()
-
+    environment_len = 64
+    environ_shared = Array('i', [0] * environment_len)
     proc1 = multiprocessing.Process(target=pac_process, args=(game_start_child,
                                                               game_over,
-                                                              environ_child,
-                                                              restart_parent))
+                                                              environ_shared,
+                                                              restart_parent,
+                                                              environment_len))
     proc2 = multiprocessing.Process(target=env_process, args=(game_start_parent,
                                                               game_over,
-                                                              environ_parent,
-                                                              restart_child))
+                                                              environ_shared,
+                                                              restart_child,
+                                                              environment_len))
     proc1.start()
     proc2.start()
     proc1.join()

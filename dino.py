@@ -14,16 +14,17 @@ import tensorflow as tf
 class Pac:
     def __init__(self, game_over, environ, env_len=32):
         self.alive = True
-        self.mem = [([0] * env_len * 2, 0)]
+        self.mem = [([0] * env_len * 2, 0, 0, time.time())]
         self.X = []
         self.y = []
         self.w = []
+        self.p = []
         self.env_len = env_len
         self.jump_time = 0
         self.first_game = True
 
         self.model = Sequential()
-        self.model.add(Dense(env_len*2, input_dim=64, activation="relu", kernel_initializer="he_uniform"))
+        self.model.add(Dense(env_len*2, input_dim=env_len*2, activation="relu", kernel_initializer="he_uniform"))
         self.model.add(Dense(env_len*2, activation="relu", kernel_initializer="he_uniform"))
         self.model.add(Dense(1))
         self.model.add(Activation("sigmoid"))
@@ -44,25 +45,28 @@ class Pac:
     def think(self):
         print('THINKING')
         mem_len = len(self.mem)
+        with open('log','a+') as log:
+            log.write('{}\n'.format(mem_len))
+        last_time = self.mem[-1][3]
         for i in range(mem_len):
-            if i < mem_len - 3:
+            if last_time - self.mem[i][3] > 0.8:
                 y_ = self.mem[i][1]
                 w_ = 1
             else:
                 y_ = int(not self.mem[i][1])
-                w_ = 0.5
+                w_ = 0.1
 
             self.X.append(self.mem[i][0])
             self.y.append([y_])
             self.w.append(w_)
-
-            print(''.join((str(l) for l in self.X[-1])), self.y[-1], self.w[-1])
+            self.p.append(self.mem[i][2])
+            print(''.join((str(l) for l in self.X[-1][64:])), self.y[-1], self.w[-1], self.p[-1])
 
         with open('data_2.sav', 'w+') as d_file:
             for i in range(len(self.X)):
                 d_file.write('{},{},{}\n'.format(self.X[i], self.y[i], self.w[i]))
 
-        self.mem = [([0] * self.env_len * 2, 0)]
+        self.mem = [([0] * self.env_len * 2, 0, 0, time.time())]
 
         print('X:', np.shape(self.X), 'Classes:', len(np.unique(self.y)))
 
@@ -82,39 +86,42 @@ class Pac:
     def live_play(self, game_over, environ, restart):
 
         empty = [0] * self.env_len
-
+        last_env = [0] * self.env_len
         while self.alive:
 
             if game_over.is_set():
                 print ("GAME OVER")
                 self.think()
                 keyboard.press_and_release('up, up')
-                while environ.poll():
-                    print('+')
-                    _ = environ.recv()
 
                 print('RESTART')
                 game_over.clear()
                 restart.send('restart')
 
-            elif environ.poll():
-                cur_env = environ.recv()
+            else:
 
-                if cur_env != empty and (time.time() - self.jump_time) > 0.35:
+                cur_env = environ[:].copy()
+
+                if cur_env!=last_env and (time.time() - self.jump_time) > 0.35:
+                    #print(''.join((str(e) for e in environ)))
                     with self.graph.as_default():
                         view = last_env + cur_env
                         p = self.model.predict(np.array([view]))[0][0]
-                        if p > 0.95:
-                            p = 1
-                        elif p < 0.05:
-                            p = 0
+                        if p > 0.5:
+                            x = 1
+                        else:
+                            x = 0
+
                         if self.first_game:
                             x = np.random.choice([0, 1], p=[0.5, 0.5])
-                        else:
-                            x = np.random.choice([0, 1], p=[1 - p, p])
+
 
                         if x == 1:
                             self.dino_jump()
 
-                        self.mem.append((view, x))
-                last_env = cur_env[:]
+                        self.mem.append((view, x, p, time.time()))
+                else:
+                    #print(cur_env != last_env, (time.time() - self.jump_time) > 0.35)
+                    pass
+                    #print(len(cur_env))
+                last_env = cur_env.copy()
