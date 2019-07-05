@@ -43,6 +43,10 @@ class Pac:
         self.jump_time = time.time()
 
     def think(self):
+        self.X = []
+        self.y = []
+        self.w = []
+        self.p = []
         print('THINKING')
         mem_len = len(self.mem)
         with open('log','a+') as log:
@@ -102,7 +106,7 @@ class Pac:
 
                 cur_env = environ[:].copy()
 
-                if cur_env!=last_env and (time.time() - self.jump_time) > 0.35:
+                if cur_env!=last_env and (time.time() - self.jump_time) > 0.49:
                     #print(''.join((str(e) for e in environ)))
                     with self.graph.as_default():
                         view = last_env + cur_env
