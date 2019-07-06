@@ -22,6 +22,10 @@ class Pac:
         self.env_len = env_len
         self.jump_time = 0
         self.first_game = True
+        with open('log', 'w+') as log:
+            log.write('game_len\n')
+        with open('data_2.sav', 'w+') as d_file:
+            d_file.write('')
 
         self.model = Sequential()
         self.model.add(Dense(env_len*2, input_dim=env_len*2, activation="relu", kernel_initializer="he_uniform"))
@@ -66,7 +70,7 @@ class Pac:
             self.p.append(self.mem[i][2])
             print(''.join((str(l) for l in self.X[-1][64:])), self.y[-1], self.w[-1], self.p[-1])
 
-        with open('data_2.sav', 'w+') as d_file:
+        with open('data_2.sav', 'a+') as d_file:
             for i in range(len(self.X)):
                 d_file.write('{},{},{}\n'.format(self.X[i], self.y[i], self.w[i]))
 
@@ -76,56 +80,38 @@ class Pac:
 
         if len(np.unique(self.y)) > 1:
 
-            if np.shape(self.X)[0] < 100:
-                epochs = 10
-            else:
-                epochs = 1
-
             with self.graph.as_default():
-                self.model.fit(np.array(self.X), np.array(self.y), sample_weight=np.array(self.w), epochs=epochs,
+                self.model.fit(np.array(self.X), np.array(self.y),
+                               sample_weight=np.array(self.w), epochs=1,
                                verbose=0)
                 self.model.save('dino_2.model')
             self.first_game = False
 
     def live_play(self, game_over, environ, restart):
 
-        empty = [0] * self.env_len
         last_env = [0] * self.env_len
-        while self.alive:
 
+        while self.alive:
             if game_over.is_set():
-                print ("GAME OVER")
+                print("GAME OVER")
                 self.think()
                 keyboard.press_and_release('up, up')
 
                 print('RESTART')
                 game_over.clear()
                 restart.send('restart')
-
             else:
-
                 cur_env = environ[:].copy()
 
-                if cur_env!=last_env and (time.time() - self.jump_time) > 0.49:
-                    #print(''.join((str(e) for e in environ)))
+                if cur_env != last_env and (time.time() - self.jump_time) > 0.49:
                     with self.graph.as_default():
                         view = last_env + cur_env
                         p = self.model.predict(np.array([view]))[0][0]
                         if p > 0.5:
+                            self.dino_jump()
                             x = 1
                         else:
                             x = 0
-
-                        if self.first_game:
-                            x = np.random.choice([0, 1], p=[0.5, 0.5])
-
-
-                        if x == 1:
-                            self.dino_jump()
-
                         self.mem.append((view, x, p, time.time()))
-                else:
-                    #print(cur_env != last_env, (time.time() - self.jump_time) > 0.35)
-                    pass
-                    #print(len(cur_env))
+
                 last_env = cur_env.copy()
