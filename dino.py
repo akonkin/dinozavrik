@@ -62,13 +62,13 @@ class Pac:
                 w_ = 1
             else:
                 y_ = int(not self.mem[i][1])
-                w_ = 0.1
+                w_ = 0.5
 
             self.X.append(self.mem[i][0])
             self.y.append([y_])
             self.w.append(w_)
             self.p.append(self.mem[i][2])
-            print(''.join((str(l) for l in self.X[-1][64:])), self.y[-1], self.w[-1], self.p[-1])
+            print(''.join((str(l) for l in self.X[-1][self.env_len:self.env_len+50])), self.y[-1], self.w[-1], self.p[-1])
 
         with open('data_2.sav', 'a+') as d_file:
             for i in range(len(self.X)):
@@ -103,7 +103,7 @@ class Pac:
             else:
                 cur_env = environ[:].copy()
 
-                if cur_env != last_env and (time.time() - self.jump_time) > 0.49:
+                if cur_env != last_env and (time.time() - self.jump_time) > 0.6:
                     with self.graph.as_default():
                         view = last_env + cur_env
                         p = self.model.predict(np.array([view]))[0][0]
