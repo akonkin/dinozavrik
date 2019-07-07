@@ -62,7 +62,7 @@ class Pac:
                 w_ = 1
             else:
                 y_ = int(not self.mem[i][1])
-                w_ = 0.5
+                w_ = 0.1
 
             self.X.append(self.mem[i][0])
             self.y.append([y_])

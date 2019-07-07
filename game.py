@@ -55,7 +55,7 @@ def env_process(game_start, game_over, environ_, restart, env_len):
 
     while True:
 
-            im = get_img(t_rex + w, t_rex_y - 16, 500, h // 2 + 17)
+            im = get_img(t_rex + w, t_rex_y - 16, env_len, h // 2 + 17)
 
             c1 = im[5, 225, 0]
             c2 = im[5, 224, 0]
@@ -75,10 +75,10 @@ def env_process(game_start, game_over, environ_, restart, env_len):
                 print('RESTARTED')
             else:
                 environ = [0] * env_len
-                for i in range(0, 500):
+                for i in range(0, env_len):
                     c = im[h // 2 + 16, i, 0]
                     if c == 83:
-                        environ[i // 5] = 1
+                        environ[i] = 1
                 environ_[:] = environ[:]
             if start_round:
                 game_start.send('ok')
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     game_over = multiprocessing.Event()
     environ_parent, environ_child = multiprocessing.Pipe()
     restart_parent, restart_child = multiprocessing.Pipe()
-    environment_len = 100
+    environment_len = 400
     environ_shared = Array('i', [0] * environment_len)
     proc1 = multiprocessing.Process(target=pac_process, args=(game_start_child,
                                                               game_over,
