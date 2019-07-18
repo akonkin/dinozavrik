@@ -6,6 +6,7 @@ import multiprocessing
 from multiprocessing import Array
 import keyboard
 import time
+import sys
 import numpy as np
 import Quartz.CoreGraphics as CG
 from dino import Pac
@@ -39,7 +40,7 @@ def pac_process(game_start, game_over, environ, restart, env_len):
     pacman = Pac(game_over, environ, env_len)
     x = game_start.recv()
 
-    print('GAME START')
+    #print('GAME START')
 
     pacman.live_play(game_over, environ, restart)
 
@@ -61,9 +62,9 @@ def env_process(game_start, game_over, environ_, restart, env_len):
             c2 = im[5, 224, 0]
             # print (c1[0],c2[0])
             if c1!= c2 and (c1 == 83 or c2 == 83):
-                print('GO - ', time.time())
+                #print('GO - ', time.time())
                 game_over.set()
-                print('GO SENT - ', time.time())
+                #print('GO SENT - ', time.time())
                 while not restart.poll():
                     pass
                 while restart.poll():
@@ -72,14 +73,20 @@ def env_process(game_start, game_over, environ_, restart, env_len):
                 while time.time() - start < 1:
                     pass
                 keyboard.press_and_release('up, up')
-                print('RESTARTED')
+                #print('RESTARTED')
             else:
                 environ = [0] * env_len
+                #t = ['.'] * (env_len//10)
+
                 for i in range(0, env_len):
                     c = im[h // 2 + 16, i, 0]
-                    if c == 83:
+                    d = im[h // 2 + 7, i, 0]
+                    if c == 83 or d==83:
                         environ[i] = 1
+                        #t[i//10] = '🌵'
                 environ_[:] = environ[:]
+                #sys.stdout.write("\r" + ''.join(t))
+                #sys.stdout.flush()
             if start_round:
                 game_start.send('ok')
                 start_round = False
@@ -90,7 +97,7 @@ if __name__ == '__main__':
     game_over = multiprocessing.Event()
     environ_parent, environ_child = multiprocessing.Pipe()
     restart_parent, restart_child = multiprocessing.Pipe()
-    environment_len = 400
+    environment_len = 600
     environ_shared = Array('i', [0] * environment_len)
     proc1 = multiprocessing.Process(target=pac_process, args=(game_start_child,
                                                               game_over,

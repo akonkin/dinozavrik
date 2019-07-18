@@ -9,7 +9,8 @@ from keras.layers import Activation
 from keras.layers import Dense
 from keras.models import load_model
 import tensorflow as tf
-
+import bitstring
+import struct
 
 class Pac:
     def __init__(self, game_over, environ, env_len=32):
@@ -24,8 +25,8 @@ class Pac:
         self.first_game = True
         with open('log', 'w+') as log:
             log.write('game_len\n')
-        with open('data_2.sav', 'w+') as d_file:
-            d_file.write('')
+        with open('data_2.sav', 'wb+') as d_file:
+            d_file.write(b'')
 
         self.model = Sequential()
         self.model.add(Dense(env_len*2, input_dim=env_len*2, activation="relu", kernel_initializer="he_uniform"))
@@ -51,7 +52,7 @@ class Pac:
         self.y = []
         self.w = []
         self.p = []
-        print('THINKING')
+        #print('THINKING')
         mem_len = len(self.mem)
         with open('log','a+') as log:
             log.write('{}\n'.format(mem_len))
@@ -68,15 +69,19 @@ class Pac:
             self.y.append([y_])
             self.w.append(w_)
             self.p.append(self.mem[i][2])
-            print(''.join((str(l) for l in self.X[-1][self.env_len:self.env_len+50])), self.y[-1], self.w[-1], self.p[-1])
+            #print(''.join((str(l) for l in self.X[-1][self.env_len:self.env_len+50])), self.y[-1], self.w[-1], self.p[-1])
 
-        with open('data_2.sav', 'a+') as d_file:
+        with open('data_2.sav', 'ab+') as d_file:
             for i in range(len(self.X)):
-                d_file.write('{},{},{}\n'.format(self.X[i], self.y[i], self.w[i]))
+                x_string = ''.join([str(_) for _ in self.X[i]])
+                x_string = '0'*((len(x_string)//8+1)*8-len(x_string)) + x_string
+                x_string = bitstring.BitArray(bin=x_string).tobytes()
+                d_file.write(x_string)
+                d_file.write(struct.pack('if', self.y[i][0], self.w[i]))
 
         self.mem = [([0] * self.env_len * 2, 0, 0, time.time())]
 
-        print('X:', np.shape(self.X), 'Classes:', len(np.unique(self.y)))
+        #print('X:', np.shape(self.X), 'Classes:', len(np.unique(self.y)))
 
         if len(np.unique(self.y)) > 1:
 
@@ -93,11 +98,11 @@ class Pac:
 
         while self.alive:
             if game_over.is_set():
-                print("GAME OVER")
+                #print("GAME OVER")
                 self.think()
                 keyboard.press_and_release('up, up')
 
-                print('RESTART')
+                #print('RESTART')
                 game_over.clear()
                 restart.send('restart')
             else:
