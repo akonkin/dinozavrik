@@ -8,6 +8,7 @@ from keras.models import Sequential
 from keras.layers import Activation
 from keras.layers import Dense
 from keras.models import load_model
+from keras import regularizers
 import tensorflow as tf
 import bitstring
 import struct
@@ -29,8 +30,10 @@ class Pac:
             d_file.write(b'')
 
         self.model = Sequential()
-        self.model.add(Dense(env_len*2, input_dim=env_len*2, activation="relu", kernel_initializer="he_uniform"))
-        self.model.add(Dense(env_len*2, activation="relu", kernel_initializer="he_uniform"))
+        self.model.add(Dense(env_len*2, input_dim=env_len*2, activation="relu", kernel_initializer="he_uniform",
+                             kernel_regularizer=regularizers.l2(0.001)))
+        self.model.add(Dense(env_len*2, activation="relu", kernel_initializer="he_uniform",
+                             kernel_regularizer=regularizers.l2(0.001)))
         self.model.add(Dense(1))
         self.model.add(Activation("sigmoid"))
         self.model.compile(loss="binary_crossentropy", optimizer='adam',
@@ -76,8 +79,7 @@ class Pac:
                 x_string = ''.join([str(_) for _ in self.X[i]])
                 x_string = '0'*((len(x_string)//8+1)*8-len(x_string)) + x_string
                 x_string = bitstring.BitArray(bin=x_string).tobytes()
-                d_file.write(x_string)
-                d_file.write(struct.pack('if', self.y[i][0], self.w[i]))
+                d_file.write(x_string+struct.pack('if', self.y[i][0], self.w[i]))
 
         self.mem = [([0] * self.env_len * 2, 0, 0, time.time())]
 
